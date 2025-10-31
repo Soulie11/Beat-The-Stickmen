@@ -2,12 +2,19 @@
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Movement Settings")]
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
+
+    [Header("Attack Settings")]
+    public float punchCooldown = 0.5f;
+    private float nextPunchTime = 0f;
+
     private Rigidbody2D rb;
     private Animator animator;
     private bool isGrounded;
     private bool facingRight = true;
+    private bool isPunching = false;
 
     void Start()
     {
@@ -18,24 +25,41 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         float move = Input.GetAxis("Horizontal");
-        rb.velocity = new Vector2(move * moveSpeed, rb.velocity.y);
+
+        if (!isPunching)
+        {
+            rb.velocity = new Vector2(move * moveSpeed, rb.velocity.y);
+        }
 
         animator.SetFloat("Speed", Mathf.Abs(move));
 
         if (move > 0 && !facingRight)
-        {
             Flip();
-        }
         else if (move < 0 && facingRight)
-        {
             Flip();
-        }
 
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             animator.SetBool("IsJumping", true);
         }
+
+        if (Input.GetButtonDown("Fire1") && Time.time >= nextPunchTime)
+        {
+            Punch();
+        }
+    }
+
+    private void Punch()
+    {
+        animator.SetTrigger("Punch");
+        isPunching = true;
+        nextPunchTime = Time.time + punchCooldown;
+    }
+
+    public void EndPunch()
+    {
+        isPunching = false;
     }
 
     private void Flip()
@@ -53,7 +77,6 @@ public class PlayerMovement : MonoBehaviour
             isGrounded = true;
             animator.SetBool("IsJumping", false);
         }
-
     }
 
     private void OnCollisionExit2D(Collision2D collision)
